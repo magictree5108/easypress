@@ -1,0 +1,5 @@
+streamlit
+anthropic
+pdfplumber
+python-docx
+olefile
