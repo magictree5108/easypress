@@ -107,7 +107,35 @@ def parse_json(raw: str):
     e = max(t.rfind("}"), t.rfind("]"))
     if e > -1:
         t = t[: e + 1]
-    return json.loads(t)
+    try:
+        return json.loads(t)
+    except json.JSONDecodeError:
+        pass
+    # 응급처치: 응답이 중간에 잘리거나 살짝 깨진 JSON을 자동 봉합
+    fixed = re.sub(r",\s*([}\]])", r"\1", t)  # 뒤꼬리 쉼표 제거
+    quote_open, esc, stack = False, False, []
+    for ch in fixed:
+        if esc:
+            esc = False
+            continue
+        if ch == "\\":
+            esc = True
+            continue
+        if ch == '"':
+            quote_open = not quote_open
+            continue
+        if quote_open:
+            continue
+        if ch in "{[":
+            stack.append("}" if ch == "{" else "]")
+        elif ch in "}]" and stack:
+            stack.pop()
+    if quote_open:
+        fixed += '"'
+    fixed += "".join(reversed(stack))
+    fixed = re.sub(r":\s*([}\]])", r": null\1", fixed)  # 매달린 키 보정
+    fixed = re.sub(r",\s*([}\]])", r"\1", fixed)
+    return json.loads(fixed)
 
 
 def gen_ok() -> bool:
@@ -134,7 +162,8 @@ def extract_prompt(doc: str) -> str:
         "8) 〈표 풀이〉 블록은 표의 행·열 대응을 코드가 미리 풀어놓은 것이다. 그대로 신뢰하고 활용하라.\n"
         "9) 요일제·차수처럼 조건에 따라 일정·대상이 나뉘는 표는 대응 관계를 문장으로 풀어 '어떻게'에 기록하라. 예: 출생연도 끝자리 1·6은 4월 27일(월), 2·7은 4월 28일(화)에 신청.\n"
         "10) '어떻게'에는 신청 방법, 금액 구분, 지급수단, 사용처와 사용기한 등 실행 세부를 문장으로 압축해 모두 담아라.\n"
-        "11) 지원 '대상'(돈·혜택을 받는 사람)과 '사용처'(돈을 쓸 수 있는 곳)를 절대 혼동하지 마라.\n\n"
+        "11) 지원 '대상'(돈·혜택을 받는 사람)과 '사용처'(돈을 쓸 수 있는 곳)를 절대 혼동하지 마라.\n"
+        "12) 출력 JSON은 반드시 완결하라. '근거'와 '기타핵심사실'의 각 문장은 40자 이내로 짧게 쓴다. 문자열 값 안에 큰따옴표를 쓰지 않는다(필요하면 『』 사용).\n\n"
         '기획안:\n"""\n' + doc + '\n"""'
     )
 
@@ -492,6 +521,22 @@ def apply_fixes(t: str) -> str:
     t = re.sub(r'\.(["\u201d])(고|라고|라며|이라며|며)', r"\1\2", t)
     return t
 
+
+# ───────────────────────── 접근코드 게이트 ─────────────────────────
+
+_passcode = str(secret("PASSCODE") or "")
+if _passcode and not ss.authed:
+    st.markdown("### 이지프레스 Easy Press")
+    st.caption("성동구 보도자료 초안·검수 (개인 제작 프로토타입)")
+    pw = st.text_input("접근코드", type="password")
+    if st.button("입장", type="primary"):
+        if pw == _passcode:
+            ss.authed = True
+            st.rerun()
+        else:
+            st.error("접근코드가 달라요. 배포자에게 문의해 주세요.")
+    st.stop()
+
 # ───────────────────────── 헤더 ─────────────────────────
 
 _logo = Path("assets/logo.png")
@@ -540,7 +585,7 @@ if ss.step == 1:
         if gen_ok():
             try:
                 with st.spinner("기획안에서 팩트를 추출하는 중…"):
-                    j = parse_json(ask(extract_prompt(ss.plan_text)))
+                    j = parse_json(ask(extract_prompt(ss.plan_text), max_tokens=2500))
                 ss.gen_count += 1
                 miss = []
 
@@ -570,7 +615,7 @@ if ss.step == 1:
                 ss.pending = j.get("미확정_신호") or []
                 st.rerun()
             except Exception as e:
-                st.error(f"추출 실패: {e}")
+                st.error(f"추출 실패: {e} — 한 번 더 눌러보세요. 반복되면 기획안 분량을 조금 줄여서 시도해 주세요.")
 
     if ss.excluded:
         st.error("기획안에서 제외한 내부 정보 (보도자료에 넣지 않음)\n\n- " + "\n- ".join(map(str, ss.excluded)))
