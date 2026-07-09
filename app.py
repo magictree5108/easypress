@@ -521,20 +521,140 @@ def apply_fixes(t: str) -> str:
     t = re.sub(r'\.(["\u201d])(고|라고|라며|이라며|며)', r"\1\2", t)
     return t
 
+
+# ───────────────────────── 뉴스데스크 UI ─────────────────────────
+
+NEWS_CSS = """<style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+html, body, [class*="st-"] { font-family: 'Pretendard', -apple-system, sans-serif; }
+.stApp {
+  background:
+    radial-gradient(1100px 520px at 88% -8%, rgba(229,35,61,.16), transparent 60%),
+    radial-gradient(900px 480px at -8% 12%, rgba(43,92,184,.20), transparent 55%),
+    linear-gradient(180deg, #0B1220 0%, #0E1626 48%, #0A101B 100%) !important;
+}
+.block-container { max-width: 900px; padding-top: 1.3rem; }
+p, label, .stMarkdown, [data-testid="stWidgetLabel"] p { color:#E6EBF5; }
+[data-testid="stCaptionContainer"], .np-tag { color:#8FA1C2 !important; }
+.np-hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:18px;
+  border-radius:18px;padding:22px 24px;margin-bottom:6px;
+  background:linear-gradient(135deg,#101B31 0%,#0C1526 55%,#14203A 100%);
+  border:1px solid rgba(255,255,255,.09);
+  box-shadow:0 22px 55px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.07);}
+.np-hero::after{content:"";position:absolute;top:-70%;left:-35%;width:55%;height:240%;
+  background:linear-gradient(78deg,transparent,rgba(255,255,255,.07),transparent);
+  transform:rotate(9deg);animation:np-sweep 7s linear infinite;pointer-events:none;}
+@keyframes np-sweep{from{left:-45%}to{left:125%}}
+.np-logo{width:62px;height:62px;border-radius:14px;object-fit:cover;flex:0 0 auto;
+  transform:perspective(500px) rotateY(-14deg) rotateX(5deg);
+  box-shadow:12px 14px 28px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.14);}
+.np-logo-fallback{display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;
+  background:linear-gradient(145deg,#E5233D,#8E1226);}
+.np-head{min-width:0;}
+.np-title{font-size:29px;font-weight:800;color:#F3F6FC;letter-spacing:-.02em;line-height:1.12;}
+.np-title small{font-size:13px;font-weight:800;color:#8FA1C2;letter-spacing:.16em;margin-left:9px;}
+.np-bar{height:4px;width:66px;border-radius:99px;margin-top:9px;
+  background:linear-gradient(90deg,#E5233D,#FF7A45);box-shadow:0 0 14px rgba(229,35,61,.6);}
+.np-live{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:12px;flex:0 0 auto;}
+.np-badge{font-size:10.5px;font-weight:800;letter-spacing:.14em;color:#FF6074;
+  border:1px solid rgba(255,84,104,.45);border-radius:999px;padding:5px 11px;background:rgba(229,35,61,.10);}
+.np-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#FF3B54;margin-right:6px;
+  box-shadow:0 0 8px rgba(255,59,84,.9);animation:np-blink 1.5s ease infinite;}
+@keyframes np-blink{50%{opacity:.2}}
+.np-scene{width:42px;height:42px;perspective:280px;}
+.np-cube{width:100%;height:100%;position:relative;transform-style:preserve-3d;animation:np-spin 9s linear infinite;}
+.np-cube div{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:15px;color:#fff;border-radius:8px;
+  background:linear-gradient(145deg,rgba(229,35,61,.95),rgba(140,15,35,.95));
+  border:1px solid rgba(255,255,255,.28);box-shadow:inset 0 0 16px rgba(0,0,0,.35);}
+.np-cube .f1{transform:rotateY(0) translateZ(21px)}.np-cube .f2{transform:rotateY(90deg) translateZ(21px)}
+.np-cube .f3{transform:rotateY(180deg) translateZ(21px)}.np-cube .f4{transform:rotateY(270deg) translateZ(21px)}
+.np-cube .f5{transform:rotateX(90deg) translateZ(21px)}.np-cube .f6{transform:rotateX(-90deg) translateZ(21px)}
+@keyframes np-spin{from{transform:rotateX(-16deg) rotateY(0)}to{transform:rotateX(-16deg) rotateY(360deg)}}
+.np-steps{display:flex;gap:8px;margin:14px 0 10px;flex-wrap:wrap;}
+.np-step{font-size:12.5px;font-weight:700;padding:7px 15px;border-radius:999px;color:#8FA1C2;
+  border:1px solid rgba(143,161,194,.28);background:rgba(255,255,255,.03);}
+.np-step.on{color:#fff;border-color:transparent;
+  background:linear-gradient(135deg,#E5233D,#A61830);box-shadow:0 8px 20px rgba(229,35,61,.38);}
+.stButton>button,.stDownloadButton>button{border-radius:12px;font-weight:700;
+  border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.05);color:#E6EBF5;
+  transition:transform .12s ease, box-shadow .12s ease;}
+.stButton>button:hover,.stDownloadButton>button:hover{transform:translateY(-1px);box-shadow:0 10px 26px rgba(0,0,0,.4);}
+.stButton>button[kind="primary"]{background:linear-gradient(135deg,#E5233D,#A61830);border:none;
+  box-shadow:0 8px 22px rgba(229,35,61,.4);}
+textarea,.stTextInput input{border-radius:12px !important;background:rgba(255,255,255,.045) !important;
+  border:1px solid rgba(255,255,255,.13) !important;color:#E6EBF5 !important;}
+[data-testid="stFileUploaderDropzone"]{background:rgba(255,255,255,.03);
+  border:1.5px dashed rgba(143,161,194,.4);border-radius:14px;}
+.stCode,pre,code{border-radius:12px !important;}
+hr{border-color:rgba(255,255,255,.09) !important;}
+h1,h2,h3,h4{color:#F3F6FC !important;}
+@media (max-width:640px){.np-live{display:none}.np-title{font-size:22px}.np-logo{width:48px;height:48px}}
+</style>"""
+
+
+@st.cache_data
+def _logo_b64() -> str:
+    try:
+        import base64
+        lp = Path("assets/logo.png")
+        if lp.exists():
+            return base64.b64encode(lp.read_bytes()).decode()
+    except Exception:
+        pass
+    return ""
+
+
+def render_header():
+    b64 = _logo_b64()
+    if b64:
+        logo_html = '<img class="np-logo" src="data:image/png;base64,' + b64 + '"/>'
+    else:
+        logo_html = '<div class="np-logo np-logo-fallback">EP</div>'
+    st.markdown(
+        NEWS_CSS
+        + '<div class="np-hero">'
+        + logo_html
+        + '<div class="np-head">'
+        + '<div class="np-title">이지프레스 <small>EASY PRESS</small></div>'
+        + '<div class="np-tag">성동구 보도자료 초안·검수 데스크 · 개인 제작 프로토타입</div>'
+        + '<div class="np-bar"></div></div>'
+        + '<div class="np-live"><span class="np-badge"><span class="np-dot"></span>LIVE · PRESS DESK</span>'
+        + '<div class="np-scene"><div class="np-cube">'
+        + '<div class="f1">E</div><div class="f2">P</div><div class="f3">성</div><div class="f4">동</div>'
+        + '<div class="f5"></div><div class="f6"></div>'
+        + "</div></div></div></div>",
+        unsafe_allow_html=True,
+    )
+
+
+def render_steps(cur: int):
+    labels = ["① 팩트 입력", "② 제목 선택", "③ 초안·검수"]
+    pills = ""
+    for i, s in enumerate(labels):
+        cls = "np-step on" if i + 1 == cur else "np-step"
+        pills += '<span class="' + cls + '">' + s + "</span>"
+    st.markdown('<div class="np-steps">' + pills + "</div>", unsafe_allow_html=True)
+
+
+# ───────────────────────── 접근코드 게이트 ─────────────────────────
+
+_passcode = str(secret("PASSCODE") or "")
+if _passcode and not ss.authed:
+    render_header()
+    pw = st.text_input("접근코드", type="password")
+    if st.button("입장", type="primary"):
+        if pw == _passcode:
+            ss.authed = True
+            st.rerun()
+        else:
+            st.error("접근코드가 달라요. 배포자에게 문의해 주세요.")
+    st.stop()
+
 # ───────────────────────── 헤더 ─────────────────────────
 
-_logo = Path("assets/logo.png")
-c1, c2 = st.columns([1, 6])
-with c1:
-    if _logo.exists():
-        st.image(str(_logo), width=56)
-with c2:
-    st.markdown("### 이지프레스 &nbsp;<span style='font-size:0.6em;color:#6E675B'>Easy Press</span>", unsafe_allow_html=True)
-    st.caption("성동구 보도자료 초안·검수 · 개인 제작 프로토타입")
-
-_steps = ["① 팩트 입력", "② 제목 선택", "③ 초안·검수"]
-st.markdown(" · ".join(f"**{s}**" if i + 1 == ss.step else f"<span style='color:#999'>{s}</span>" for i, s in enumerate(_steps)), unsafe_allow_html=True)
-st.divider()
+render_header()
+render_steps(ss.step)
 
 
 def facts_dict() -> dict:
