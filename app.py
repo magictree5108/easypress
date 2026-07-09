@@ -492,22 +492,6 @@ def apply_fixes(t: str) -> str:
     t = re.sub(r'\.(["\u201d])(고|라고|라며|이라며|며)', r"\1\2", t)
     return t
 
-
-# ───────────────────────── 접근코드 게이트 ─────────────────────────
-
-_passcode = str(secret("PASSCODE") or "")
-if _passcode and not ss.authed:
-    st.markdown("### 이지프레스 Easy Press")
-    st.caption("성동구 보도자료 초안·검수 (개인 제작 프로토타입)")
-    pw = st.text_input("접근코드", type="password")
-    if st.button("입장", type="primary"):
-        if pw == _passcode:
-            ss.authed = True
-            st.rerun()
-        else:
-            st.error("접근코드가 달라요. 배포자에게 문의해 주세요.")
-    st.stop()
-
 # ───────────────────────── 헤더 ─────────────────────────
 
 _logo = Path("assets/logo.png")
