@@ -536,7 +536,8 @@ html, body { font-family: 'Pretendard', -apple-system, sans-serif; }
     radial-gradient(900px 480px at -8% 12%, rgba(43,92,184,.20), transparent 55%),
     linear-gradient(180deg, #0B1220 0%, #0E1626 48%, #0A101B 100%) !important;
 }
-.block-container { max-width: 900px; padding-top: 1.1rem; }
+[data-testid="stHeader"] { background: transparent !important; }
+.block-container { max-width: 900px; padding-top: 3.2rem; }
 [data-testid="stCaptionContainer"] { color:#8FA1C2 !important; }
 .np-steps{display:flex;gap:8px;margin:10px 0 10px;flex-wrap:wrap;}
 .np-step{font-size:12.5px;font-weight:700;padding:7px 15px;border-radius:999px;color:#8FA1C2;
