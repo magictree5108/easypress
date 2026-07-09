@@ -560,9 +560,9 @@ h1,h2,h3,h4{color:#F3F6FC !important;}
 
 HERO_HTML = """<style>
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
-html,body{margin:0;padding:0;background:transparent;font-family:'Pretendard',-apple-system,sans-serif;}
+html,body{margin:0;padding:4px 2px 12px;background:transparent;font-family:'Pretendard',-apple-system,sans-serif;}
 .np-hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:18px;
-  border-radius:18px;padding:20px 24px;margin:2px;
+  border-radius:18px;padding:18px 24px;margin:2px;
   background:linear-gradient(135deg,#101B31 0%,#0C1526 55%,#14203A 100%);
   border:1px solid rgba(255,255,255,.09);
   box-shadow:0 14px 34px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.07);}
@@ -581,22 +581,22 @@ html,body{margin:0;padding:0;background:transparent;font-family:'Pretendard',-ap
 .np-tag{color:#8FA1C2;font-size:12.5px;margin-top:5px;}
 .np-bar{height:4px;width:64px;border-radius:99px;margin-top:9px;
   background:linear-gradient(90deg,#E5233D,#FF7A45);box-shadow:0 0 14px rgba(229,35,61,.6);}
-.np-live{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:11px;flex:0 0 auto;}
+.np-live{margin-left:auto;display:flex;flex-direction:row;align-items:center;gap:14px;flex:0 0 auto;padding-right:8px;}
 .np-badge{font-size:10px;font-weight:800;letter-spacing:.13em;color:#FF6074;white-space:nowrap;
   border:1px solid rgba(255,84,104,.45);border-radius:999px;padding:5px 11px;background:rgba(229,35,61,.10);}
 .np-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#FF3B54;margin-right:6px;
   box-shadow:0 0 8px rgba(255,59,84,.9);animation:blink 1.5s ease infinite;}
 @keyframes blink{50%{opacity:.2}}
-.np-scene{width:40px;height:40px;perspective:260px;}
+.np-scene{width:36px;height:36px;perspective:240px;margin:0 4px;}
 .np-cube{width:100%;height:100%;position:relative;transform-style:preserve-3d;animation:spin 9s linear infinite;}
-.np-cube div{position:absolute;top:0;left:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;
-  font-weight:900;font-size:14px;color:#fff;border-radius:8px;
+.np-cube div{position:absolute;top:0;left:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:13px;color:#fff;border-radius:8px;
   background:linear-gradient(145deg,rgba(229,35,61,.95),rgba(140,15,35,.95));
   border:1px solid rgba(255,255,255,.28);box-shadow:inset 0 0 14px rgba(0,0,0,.35);}
-.np-cube .f1{transform:rotateY(0) translateZ(20px)}.np-cube .f2{transform:rotateY(90deg) translateZ(20px)}
-.np-cube .f3{transform:rotateY(180deg) translateZ(20px)}.np-cube .f4{transform:rotateY(270deg) translateZ(20px)}
-.np-cube .f5{transform:rotateX(90deg) translateZ(20px)}.np-cube .f6{transform:rotateX(-90deg) translateZ(20px)}
-@keyframes spin{from{transform:rotateX(-16deg) rotateY(0)}to{transform:rotateX(-16deg) rotateY(360deg)}}
+.np-cube .f1{transform:rotateY(0) translateZ(18px)}.np-cube .f2{transform:rotateY(90deg) translateZ(18px)}
+.np-cube .f3{transform:rotateY(180deg) translateZ(18px)}.np-cube .f4{transform:rotateY(270deg) translateZ(18px)}
+.np-cube .f5{transform:rotateX(90deg) translateZ(18px)}.np-cube .f6{transform:rotateX(-90deg) translateZ(18px)}
+@keyframes spin{from{transform:rotateX(-12deg) rotateY(0)}to{transform:rotateX(-12deg) rotateY(360deg)}}
 @media (max-width:640px){.np-live{display:none}.np-title{font-size:21px}.np-logo{width:46px;height:46px}}
 </style>
 <div class="np-hero">
@@ -635,7 +635,7 @@ def render_header():
         logo_html = '<img class="np-logo" src="data:image/png;base64,' + b64 + '"/>'
     else:
         logo_html = '<div class="np-logo np-fb">EP</div>'
-    components.html(HERO_HTML.replace("__LOGO__", logo_html), height=132, scrolling=False)
+    components.html(HERO_HTML.replace("__LOGO__", logo_html), height=150, scrolling=False)
 
 
 def render_steps(cur: int):
@@ -649,17 +649,7 @@ def render_steps(cur: int):
 
 # ───────────────────────── 접근코드 게이트 ─────────────────────────
 
-_passcode = str(secret("PASSCODE") or "")
-if _passcode and not ss.authed:
-    render_header()
-    pw = st.text_input("접근코드", type="password")
-    if st.button("입장", type="primary"):
-        if pw == _passcode:
-            ss.authed = True
-            st.rerun()
-        else:
-            st.error("접근코드가 달라요. 배포자에게 문의해 주세요.")
-    st.stop()
+# 접근코드 게이트 제거됨 — 링크만으로 바로 사용. 방어선: 세션 생성 20회 제한 + API 콘솔 월 지출 한도.
 
 # ───────────────────────── 헤더 ─────────────────────────
 
